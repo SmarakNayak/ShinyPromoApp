@@ -8,11 +8,23 @@
 #
 
 library(shiny)
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load("dplyr","data.table","rhandsontable","DT","devtools")
+if (!require("googlesheets4")) devtools::install_github("tidyverse/googlesheets4")
+library(dplyr)
+library(data.table)
+library(rhandsontable)
+library(DT)
+library(shinyTable)
+library(googlesheets4)
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
-  df=data.table(Team=c("Team A","Team B"),Odds=c(1.0,1.0),Stake = c(0,0),Return=c(0,0),stringsAsFactors = FALSE)
-
+  
+  df=data.table(Team=c("Team A","Team B"),Odds=c(2.0,2.0),Stake = c(0,0),Return=c(0,0),stringsAsFactors = FALSE)
+  df2=data.table(Team=c("Team A","Team A","Team B"),Odds=c(2.0,2.0,2.0),Stake = c(0,0,0),Return=c(0,0,0),
+                 Person=c("Danny","Miltu","Vikash"),Outcome=c("","",""),stringsAsFactors = FALSE)
+  ###init
   output$hot <- renderRHandsontable(
     rhandsontable(df) %>%
       hot_context_menu(allowRowEdit = FALSE, allowColEdit = FALSE) %>%
@@ -20,8 +32,17 @@ shinyServer(function(input, output) {
       hot_col("Stake", readOnly = TRUE) %>%
       hot_col("Return", readOnly = TRUE)
   )
-   
-  observeEvent(input$hot,{
+  output$record = renderRHandsontable(
+    rhandsontable(df2) %>%
+      hot_context_menu(allowRowEdit = FALSE, allowColEdit = FALSE) %>%
+      hot_validate_numeric("Odds",allowInvalid = FALSE) %>%
+      hot_col("Stake", readOnly = TRUE) %>%
+      hot_col("Return", readOnly = TRUE)
+  )
+  output$Text=renderText("Total Loss is $0. Potential Gain is $0.")
+  
+  ##on button press
+  observeEvent(input$btn,{
     output$hot <- renderRHandsontable(
       rhandsontable(DFcalculator(hot_to_r(input$hot))) %>%
         hot_context_menu(allowRowEdit = FALSE, allowColEdit = FALSE) %>%
@@ -29,22 +50,26 @@ shinyServer(function(input, output) {
         hot_col("Stake", readOnly = TRUE) %>%
         hot_col("Return", readOnly = TRUE)
     )
-  })
-  
-  output$Text = reactive({
+    
+    output$record = renderRHandsontable(
+      rhandsontable(BetMaker(hot_to_r(input$hot))) %>%
+        hot_context_menu(allowRowEdit = FALSE, allowColEdit = FALSE) %>%
+        hot_validate_numeric("Odds",allowInvalid = FALSE) %>%
+        hot_col("Stake", readOnly = TRUE) %>%
+        hot_col("Return", readOnly = TRUE)
+    )
+    
     data=hot_to_r(input$hot)
     Loss=-round(data$Return[1]-sum(data$Stake),2)
     Gain=round(sum(data$Return)-sum(data$Stake),2)
-    paste0(
+    
+    output$Text = renderText(paste0(
       "Total Loss is $",
       Loss,
-      '. Potential gain is $',
+      '. Potential Gain is $',
       Gain,
-      '.')
-    
+      '.'))
   })
-  
-  output$DT=renderDataTable(datatable(DFcalculator(hot_to_r(input$hot)),options = list(dom="t")))
 })
 
 DFcalculator = function(df) {
@@ -65,4 +90,12 @@ stakeCalculator = function(oddsA,oddsB) {
   } else {
     stop("check odds")
   }
+}
+
+BetMaker = function(df) {
+  df = df[order(-Stake)]
+  SplitRow=df[1,c("Stake","Return"):=list(Stake/2,Return/2)][1]
+  df = rbind(df,SplitRow)
+  df=df[,Person:=c("Danny","Miltu","Vikash")][order(Team)]
+  df[,Outcome:=""]
 }
