@@ -31,10 +31,33 @@ shinyUI(navbarPage(
              br(),
              h3("Record Keeper"),
              rHandsontableOutput("record"),
-             actionButton("log","Log Bets")
+             actionButton("recUpd","Update Returns"),
+             actionButton("log","Log Bets"),
+             tags$a(href = "https://docs.google.com/spreadsheets/d/1b6EMQRD55O9755rw2LhV1Vif4kqWv-GUXgQSJyQb4uI/",
+                    "Click here to find the spreadsheet")
       )
     )
   ),
-  tabPanel(title="Premier League",
-           h3("Come back later.."))
-))
+tabPanel(
+  title = "Premier League",
+  fluidRow(
+    column(
+      width = 6,
+      h3("Calculator"),
+      rHandsontableOutput("plCalc"),
+      actionButton("plBtn", "Update Stakes"),
+      textOutput("plText"),
+      br(),
+      h3("Record Keeper"),
+      rHandsontableOutput("plRecord"),
+      actionButton("plRecUpd", "Update Returns"),
+      actionButton("plLog", "Log Bets"),
+      tags$a(
+        href = "https://docs.google.com/spreadsheets/d/1b6EMQRD55O9755rw2LhV1Vif4kqWv-GUXgQSJyQb4uI/",
+        "Click here to find the spreadsheet"
+      )
+    )
+  )
+)
+  )
+)
