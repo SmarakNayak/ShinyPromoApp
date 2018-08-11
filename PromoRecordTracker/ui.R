@@ -10,24 +10,18 @@
 library(shiny)
 
 # Define UI for application that draws a histogram
-shinyUI(fluidPage(
-  
-  # Application title
-  titlePanel("Promo Calculator"),
-  
-  # Sidebar with a slider input for number of bins 
-  sidebarLayout(
-    sidebarPanel(
-       sliderInput("bins",
-                   "Number of bins:",
-                   min = 1,
-                   max = 50,
-                   value = 30)
-    ),
-    
-    # Show a plot of the generated distribution
-    mainPanel(
-       rHandsontableOutput("hot")
+shinyUI(navbarPage(
+  title="Promo Tracker",
+  fluid = TRUE,
+  tabPanel(title="Rugby League",
+    fluidRow(
+      column(width=6, 
+             rHandsontableOutput("hot"),
+             textOutput("Text")
+             ),
+      column(width=6, dataTableOutput("DT"))
     )
-  )
+  ),
+  tabPanel(title="Premier League",
+           h3("Come back later.."))
 ))
